@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Catcher</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            font-family: 'Agency FB', sans-serif;
+        }
+        #gameCanvas {
+            display: block;
+            background-color: black;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="score">Score: 0</div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let playerImage = new Image();
+        playerImage.src = "player.gif"; // Remplace avec l'URL de ton image
+
+        let coinImage = new Image();
+        coinImage.src = "coin.png"; // Remplace avec l'URL de l'image des pièces
+
+        let player = {
+            x: canvas.width / 2 - 25,
+            y: canvas.height - 80,
+            width: 50,
+            height: 50,
+            speed: 7
+        };
+        
+        let coins = [];
+        let score = 0;
+        let fallSpeed = 2;
+        let keys = {};
+
+        function spawnCoin() {
+            coins.push({
+                x: Math.random() * (canvas.width - 30),
+                y: 0,
+                width: 30,
+                height: 30
+            });
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Gestion des mouvements fluides
+            if (keys["ArrowLeft"]) player.x -= player.speed;
+            if (keys["ArrowRight"]) player.x += player.speed;
+            if (keys["ArrowUp"]) player.y -= player.speed;
+            if (keys["ArrowDown"]) player.y += player.speed;
+            
+            // Empêcher le joueur de sortir du cadre
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+            if (player.y < 0) player.y = 0;
+            if (player.y > canvas.height - player.height) player.y = canvas.height - player.height;
+            
+            // Dessine le joueur
+            ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+            
+            // Déplacement des pièces
+            for (let i = 0; i < coins.length; i++) {
+                coins[i].y += fallSpeed;
+                ctx.drawImage(coinImage, coins[i].x, coins[i].y, coins[i].width, coins[i].height);
+
+                if (
+                    coins[i].y + coins[i].height >= player.y &&
+                    coins[i].x + coins[i].width >= player.x &&
+                    coins[i].x <= player.x + player.width
+                ) {
+                    coins.splice(i, 1);
+                    score++;
+                    document.getElementById("score").innerText = "Score: " + score;
+                    if (score % 30 === 0) fallSpeed += 1;
+                } else if (coins[i].y > canvas.height) {
+                    // Si une pièce est manquée, réinitialiser le score
+                    score = 0;
+                    document.getElementById("score").innerText = "Score: " + score;
+                    coins.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        document.addEventListener("keydown", (event) => {
+            keys[event.key] = true;
+        });
+
+        document.addEventListener("keyup", (event) => {
+            keys[event.key] = false;
+        });
+        
+        setInterval(spawnCoin, 1000);
+        update();
+    </script>
+</body>
+</html>
